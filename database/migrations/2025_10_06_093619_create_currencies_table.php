@@ -1,0 +1,36 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('currencies', function (Blueprint $table) {
+            $table->ulid('id')->primary();
+            $table->string('name');
+            $table->string('symbol');
+            $table->string('logo')->nullable();
+            $table->boolean('active')->default(true);
+            $table->string('code');
+            $table->boolean('supported')->default(true);
+            $table->softDeletes();
+            $table->timestamps();
+
+            $table->index(['id', 'deleted_at']);
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('currencies');
+    }
+};
