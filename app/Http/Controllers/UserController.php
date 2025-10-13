@@ -31,6 +31,20 @@ class UserController extends Controller
         ]);
     }
 
+
+     /**
+     * Search User (API endpoint for autocomplete)
+     */
+    public function search(Request $request)
+    {
+        $query = $request->input('query');
+        $staff = $this->userService->searchUsers($query);
+
+        return response()->json([
+            'staff' => $staff
+        ]);
+    }
+
     public function create()
     {
         $roles = Role::all();

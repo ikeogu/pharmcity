@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
@@ -73,10 +74,31 @@ class User extends Authenticatable
     {
         return $this->belongsTo(State::class);
     }
-    
+
     public function city(): BelongsTo
     {
         return $this->belongsTo(City::class);
+    }
+
+    public function sales(): HasMany
+    {
+        return $this->hasMany(Sale::class);
+    }
+
+    public function prescriptions(): HasMany
+    {
+        return $this->hasMany(Prescription::class);
+    }
+
+    public function scopeSearch($query, $searchTerm)
+    {
+        $searchTerm = '%'. $searchTerm . '%';
+        $query->where(function ($q) use ($searchTerm) {
+            $q->where('first_name', 'like', $searchTerm)
+                ->orWhere('last_name', 'like', $searchTerm)
+                ->orWhere('email', 'like', $searchTerm)
+                ->orWhere('username', 'like', $searchTerm);
+        });
     }
 
     protected static function boot()

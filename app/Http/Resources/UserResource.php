@@ -26,6 +26,9 @@ class UserResource extends JsonResource
             'address'  => $this->address,
             'email'  => $this->email,
             'roles' => $this->getRoleNames(),
+            'role'       => [
+                'name' => $this->roles->first()?->name, // Safely fetch role name
+            ],
             'city'  => $this->city->name,
             'state'  => $this->state->name,
             'country_id'  => $this->country->name,

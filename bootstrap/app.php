@@ -32,7 +32,7 @@ return Application::configure(basePath: dirname(__DIR__))
         //
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        
+
          $exceptions->render(function (Throwable $e, Request $request) {
             $wantsJson = $request->is('v1/*') || $request->expectsJson();
 
@@ -84,7 +84,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
                     return response()->json([
                         'status' => 'failed',
-                        'message' => 'Something went wrong, please try again later'
+                        'message' =>$e->getMessage(), //'Something went wrong, please try again later'
                     ], Response::HTTP_INTERNAL_SERVER_ERROR);
                 })()
             };

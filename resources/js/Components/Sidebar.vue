@@ -39,17 +39,23 @@
         </Link>
 
         <!-- Manage Staff -->
-        <Link :href="route('users.index')" :class="getNavLinkClass('users.index')">
+        <Link v-if="hasRole(['superadmin'])" :href="route('users.index')" :class="getNavLinkClass('users.index')">
             <IconUsers /> Manage Staff
         </Link>
 
         <!-- Drugs -->
-        <Link :href="route('drugs.index')" :class="getNavLinkClass('drugs.index')">
+        <Link v-if="hasRole(['superadmin','pharmacist'])" :href="route('drugs.index')" :class="getNavLinkClass('drugs.index')">
             <IconPill /> Drugs
         </Link>
 
+         <Link v-if="hasRole(['superadmin','reporter'])" :href="route('patients.index')" :class="getNavLinkClass('patients.index')">
+            <IconUsers /> Patients
+        </Link>
 
-        
+         <Link v-if="hasRole(['superadmin','sales'])" :href="route('pos.index')" :class="getNavLinkClass('pos.index')">
+            <PosIcon /> POS
+        </Link>
+
       </nav>
 
       <!-- User Profile -->
@@ -74,7 +80,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { Link, usePage, router } from '@inertiajs/vue3';
 
 // Example icons (use lucide-vue-next or heroicons)
@@ -86,6 +92,7 @@ import {
   ClipboardListIcon as IconClipboard,
   LogOutIcon as IconLogout,
   UserPlusIcon as IconPeople,
+  Calculator as  PosIcon
 } from 'lucide-vue-next';
 
 interface Props {
@@ -95,11 +102,29 @@ const props = defineProps<Props>();
 const emit = defineEmits<{ close: [] }>();
 
 const page = usePage();
-const user = {
-  name: page.props.auth?.user?.name || 'Admin User',
-  email: page.props.auth?.user?.email || 'admin@pharmcity.com',
-};
+const user = computed(() => page.props.auth?.user);
 
+
+
+// Helper function
+function hasRole(roles) {
+  if (!user.value?.roles) return false
+
+  const userRoles = Array.isArray(user.value.roles)
+    ? user.value.roles
+    : [user.value.roles]
+
+  const requiredRoles = Array.isArray(roles) ? roles : [roles]
+
+  // Return true if user has *any* of the roles
+  return requiredRoles.some(role => userRoles.includes(role))
+}
+
+// Example of permission checker (optional)
+function hasPermission(permission) {
+  if (!user.value?.permissions) return false
+  return user.value.permissions.includes(permission)
+}
 
 const getNavLinkClass = (name: string) => [
   'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',

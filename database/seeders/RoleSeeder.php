@@ -19,5 +19,6 @@ class RoleSeeder extends Seeder
         Role::updateOrcreate(['name' => 'pharmacist']);
         Role::updateOrcreate(['name' => 'doctor']);
         Role::updateOrcreate(['name' => 'consultant']);
+        Role::updateOrcreate(['name' => 'sales']);
     }
 }

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Collection;
 use Spatie\Permission\Models\Role;
 
 class UserService
@@ -60,5 +61,13 @@ class UserService
 
         // 4. Return updated instance
         return $user;
+    }
+
+     /**
+     * Search drugs by name or generic name
+     */
+    public function searchUsers(string $query): Collection
+    {
+        return User::search($query)->limit(20)->get();
     }
 }
