@@ -21,12 +21,18 @@ import {
   AlertTriangleIcon,
   CurrencyIcon
 } from 'lucide-vue-next'
+import { computed } from 'vue'
 
-const props = defineProps({
-  title: String,
-  value: [String, Number],
-  icon: String,
-  color: String
+interface Props {
+  title: string
+  value: string | number
+  icon?: string
+  color?: string
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  icon: '',
+  color: 'blue'
 })
 
 const iconMap: Record<string, any> = {
@@ -36,5 +42,7 @@ const iconMap: Record<string, any> = {
   currency: CurrencyIcon
 }
 
-const iconComponent = iconMap[props.icon] || UsersIcon
+const iconComponent = computed(() => {
+  return props.icon && iconMap[props.icon] ? iconMap[props.icon] : UsersIcon
+})
 </script>

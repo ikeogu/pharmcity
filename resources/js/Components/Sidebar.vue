@@ -60,7 +60,7 @@
 
       <!-- User Profile -->
       <div class="border-t border-gray-200 p-4 dark:border-gray-700">
-        <div class="flex items-center gap-3">
+        <div v-if="user" class="flex items-center gap-3">
           <img
             :src="`https://ui-avatars.com/api/?name=${encodeURIComponent(user.first_name)}&background=0D8ABC&color=fff`"
             :alt="user.first_name"
@@ -80,8 +80,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { computed } from 'vue';
 import { Link, usePage, router } from '@inertiajs/vue3';
+import type { PageProps } from '@/types';
 
 // Example icons (use lucide-vue-next or heroicons)
 import {
@@ -92,38 +93,37 @@ import {
   ClipboardListIcon as IconClipboard,
   LogOutIcon as IconLogout,
   UserPlusIcon as IconPeople,
-  Calculator as  PosIcon
+  Calculator as PosIcon
 } from 'lucide-vue-next';
 
 interface Props {
   isOpen: boolean;
 }
+
 const props = defineProps<Props>();
 const emit = defineEmits<{ close: [] }>();
 
-const page = usePage();
+const page = usePage<PageProps>();
 const user = computed(() => page.props.auth?.user);
 
-
-
-// Helper function
-function hasRole(roles) {
-  if (!user.value?.roles) return false
+// Helper function with proper typing
+function hasRole(roles: string[]): boolean {
+  if (!user.value?.roles) return false;
 
   const userRoles = Array.isArray(user.value.roles)
-    ? user.value.roles
-    : [user.value.roles]
+    ? user.value.roles.map(r => (typeof r === 'string' ? r : r.name))
+    : [user.value.roles];
 
-  const requiredRoles = Array.isArray(roles) ? roles : [roles]
+  const requiredRoles = Array.isArray(roles) ? roles : [roles];
 
   // Return true if user has *any* of the roles
-  return requiredRoles.some(role => userRoles.includes(role))
+  return requiredRoles.some(role => userRoles.includes(role));
 }
 
 // Example of permission checker (optional)
-function hasPermission(permission) {
-  if (!user.value?.permissions) return false
-  return user.value.permissions.includes(permission)
+function hasPermission(permission: string): boolean {
+  if (!user.value?.permissions) return false;
+  return user.value.permissions.some(p => p.name === permission);
 }
 
 const getNavLinkClass = (name: string) => [
@@ -131,8 +131,7 @@ const getNavLinkClass = (name: string) => [
   route().current(name)
     ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400'
     : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700',
-]
-
+];
 
 const handleLogout = () => {
   router.post(route('logout'));

@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import AppLayout from '@/Layouts/AppLayout.vue'
-import { router, Link } from '@inertiajs/vue3'
+import { router, Link, usePage } from '@inertiajs/vue3'
 import { ref, computed } from 'vue'
 import type { PropType } from 'vue'
 import { EyeIcon, EditIcon, Trash2Icon } from 'lucide-vue-next'
 import StaffSearch from '@/Components/StaffSearch.vue'
+import type { PageProps } from '@/types'
 
 interface PaginationLink {
   url: string | null
@@ -33,6 +34,8 @@ const props = defineProps({
   },
 })
 
+const page = usePage<PageProps>()
+
 // ✅ local reactive copy of users for live search
 const filteredUsers = ref<User[]>([...props.users.data])
 
@@ -49,7 +52,7 @@ const filteredLinks = computed(() =>
   props.users.meta.links.filter((link) => link.url)
 )
 
-function goTo(url: string) {
+function goTo(url: string | null) {
   if (!url) return
   router.visit(route('users.index', getQueryParams(url)))
 }
@@ -63,9 +66,9 @@ function formatDate(dateString: string) {
   return new Date(dateString).toLocaleDateString()
 }
 
-function deleteUser(id: string) {
+function deleteUser(id: number | string) {
   if (confirm('Are you sure you want to delete this user?')) {
-    router.delete(route('users.destroy', id), {
+    router.delete(route('users.destroy', { user: id }), {
       onSuccess: () => console.log('User deleted successfully'),
       onError: () => console.error('Failed to delete user'),
     })
@@ -76,10 +79,10 @@ function deleteUser(id: string) {
 <template>
   <AppLayout>
     <div
-      v-if="$page.props.flash?.success"
+      v-if="page.props.flash?.success"
       class="mb-4 p-3 rounded bg-green-100 text-green-700"
     >
-      {{ $page.props.flash.success }}
+      {{ page.props.flash.success }}
     </div>
 
     <div class="mb-6 flex justify-between items-center">

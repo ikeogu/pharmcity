@@ -17,3 +17,5 @@ declare module '@inertiajs/vue3' {
     errors?: Record<string, string>
   }
 }
+
+

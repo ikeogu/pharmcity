@@ -3,9 +3,9 @@ import { useForm, Link, usePage } from '@inertiajs/vue3'
 import { ref, onMounted, computed } from 'vue'
 import axios from 'axios'
 import AppLayout from '@/Layouts/AppLayout.vue'
+import type { User } from '@/types'
 
-interface User {
-  id: string
+interface FormData {
   title: string
   first_name: string
   last_name: string
@@ -15,14 +15,10 @@ interface User {
   dob: string
   gender: string
   address: string
-  roles: Array<{ id: number; name: string }>
-  country: string
-  state: string
-  city: string
+  role_id: string | number
   country_id: string
   state_id: string
   city_id: string
-  created_at: string
 }
 
 const props = defineProps<{
@@ -37,14 +33,28 @@ const cities = ref<Array<{ id: string; name: string }>>([])
 const showFlash = ref(false)
 
 // Store original user data for comparison
-const originalData = ref<Record<string, any>>({})
+const originalData = ref<FormData>({
+  title: '',
+  first_name: '',
+  last_name: '',
+  username: '',
+  email: '',
+  phone: '',
+  dob: '',
+  gender: '',
+  address: '',
+  role_id: '',
+  country_id: '',
+  state_id: '',
+  city_id: '',
+})
 
 // Get flash messages from Inertia page props
 const page = usePage()
 const flash = computed(() => (page.props.flash as { success?: string; error?: string }) || {})
 
 // Initialize form with user data
-const form = useForm({
+const form = useForm<FormData>({
   title: props.user.data?.title || '',
   first_name: props.user.data?.first_name || '',
   last_name: props.user.data?.last_name || '',
@@ -54,7 +64,7 @@ const form = useForm({
   dob: props.user.data?.dob || '',
   gender: props.user.data?.gender || '',
   address: props.user.data?.address || '',
-  role_id: props.user.data?.roles?.[0]?.id || '',
+  role_id: props.user.data?.role_id || '',
   country_id: props.user.data?.country_id || '',
   state_id: props.user.data?.state_id || '',
   city_id: props.user.data?.city_id || '',
@@ -71,7 +81,7 @@ originalData.value = {
   dob: props.user.data?.dob || '',
   gender: props.user.data?.gender || '',
   address: props.user.data?.address || '',
-  role_id: props.user.data?.roles?.[0]?.id || '',
+  role_id: props.user.data?.role_id || '',
   country_id: props.user.data?.country_id || '',
   state_id: props.user.data?.state_id || '',
   city_id: props.user.data?.city_id || '',
@@ -142,10 +152,13 @@ onMounted(async () => {
 function submit() {
   // Get only the fields that have changed
   const changedData: Record<string, any> = {}
-  
-  Object.keys(form.data()).forEach((key) => {
+
+  // Type-safe iteration over form keys
+  const formKeys = Object.keys(form.data()) as Array<keyof FormData>
+
+  formKeys.forEach((key) => {
     if (form[key] !== originalData.value[key]) {
-      changedData[key] = form[key]
+      changedData[key] = form[key] as any
     }
   })
 
@@ -156,7 +169,7 @@ function submit() {
   }
 
   // Submit only changed fields
-  form.transform(() => changedData).put(route('users.update', props.user.data.id), {
+  form.transform(() => changedData).put(route('users.update', { user: props.user.data.id }), {
     preserveScroll: true,
     onSuccess: () => {
       console.log('✅ User updated successfully')
@@ -179,6 +192,7 @@ function submit() {
 </script>
 
 <template>
+  <!-- Keep the same template as before -->
   <AppLayout title="Edit Staff">
     <div class="max-w-5xl mx-auto px-6 py-8">
       <!-- Flash Messages -->

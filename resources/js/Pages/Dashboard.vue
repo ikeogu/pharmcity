@@ -34,9 +34,10 @@
           <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">Recent Sales</h3>
           <div v-if="recentSales.length" class="space-y-4">
             <div v-for="sale in recentSales" :key="sale.id" class="flex justify-between">
-              <div>
+              <div @click="router.visit(`/pos/sales/${sale.id}`)" class="cursor-pointer">
                 <p class="font-semibold text-gray-800 dark:text-gray-200">{{ sale.invoice_number }}</p>
               </div>
+
               <div class="text-right">
                 <p class="font-bold text-gray-900 dark:text-white">₦{{ Number(sale.total) }}</p>
                 <span :class="getStatusClass(sale.status)">{{ sale.status }}</span>
@@ -52,30 +53,45 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { usePage } from '@inertiajs/vue3'
+
 import { Bar } from 'vue-chartjs'
 import { Chart as ChartJS, Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale } from 'chart.js'
 import StatCard from '@/Components/StatCard.vue'
-import AppLayout from '@/Layouts/AppLayout.vue';
+import AppLayout from '@/Layouts/AppLayout.vue'
+import type { PageProps, Stats, Sale } from '@/types'
+import { usePage, router } from '@inertiajs/vue3'
 
 ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale)
 
-const page = usePage()
+interface WeeklySale {
+  day: string
+  total: string
+}
+
+interface DashboardPageProps extends PageProps {
+  dashboardData?: Stats
+  recentSales: Sale[]
+  weeklySales: WeeklySale[]
+}
+
+const page = usePage<DashboardPageProps>()
+
 const user = computed(() => page.props.auth.user)
-const stats = computed(() => page.props.dashboardData || {
+
+const stats = computed<Stats>(() => page.props.dashboardData || {
   totalDrugs: 0,
   totalPatients: 0,
   totalUsers: 0,
   totalSales: 0,
-  salesTrends: [],
 })
-const recentSales = computed(() => page.props.recentSales)
-const weeklySales = computed(() => page.props.weeklySales)
+
+const recentSales = computed<Sale[]>(() => page.props.recentSales || [])
+const weeklySales = computed<WeeklySale[]>(() => page.props.weeklySales || [])
 
 // Convert Laravel data for Chart.js
 const chartData = computed(() => {
-  const labels = weeklySales.value.map(item => item.day)
-  const totals = weeklySales.value.map(item => parseFloat(item.total))
+  const labels = weeklySales.value.map((item: WeeklySale) => item.day)
+  const totals = weeklySales.value.map((item: WeeklySale) => parseFloat(item.total))
 
   return {
     labels,
@@ -105,5 +121,8 @@ const getStatusClass = (status: string) => {
   }
 }
 
-const formatCurrency = (amount: number) => new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN' }).format(amount)
+const formatCurrency = (amount: number | string) => {
+  const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount
+  return new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN' }).format(numAmount)
+}
 </script>

@@ -3,48 +3,13 @@ import { useForm, Link, usePage } from '@inertiajs/vue3'
 import { ref, computed } from 'vue'
 import { Save, ArrowLeft } from 'lucide-vue-next'
 import AppLayout from '@/Layouts/AppLayout.vue'
+import type { Patient } from '@/types'
 
 // --------------------------------------
 // Props
 // --------------------------------------
-interface Patient {
-  id: number
-  hospital_id: string
-  phone: string
-  email: string
-  title: string
-  first_name: string
-  middle_name: string
-  last_name: string
-  dob: string
-  gender: string
-  additional_details: string
-  registration_id: string
-  service_location_id: string
-  unit_id: string
-  consultant_id: string
-  patient_type: string
-  payment_party: string
-  permanent_address: string
-  city: string
-  state: string
-  zipcode: string
-  nationality: string
-  occupation: string
-  marital_status: string
-  religion: string
-  nok_full_name: string
-  nok_phone: string
-  nok_address: string
-  nok_relationship: string
-  nok_occupation: string
-  nok_gender: string
-  status: string
-  full_name: string
-}
-
 interface Props {
-  patient: Patient
+  patient: Patient | { data: Patient }
   titles: string[]
   genders: string[]
   patientTypes: string[]
@@ -57,14 +22,16 @@ interface Props {
   errors?: Record<string, string>
 }
 
-const props = defineProps<{
-  patient: Patient | { data: Patient }
-}>()
+const props = defineProps<Props>()
 
+// Type guard to check if patient has data property
+function isPatientWrapper(patient: Patient | { data: Patient }): patient is { data: Patient } {
+  return 'data' in patient && patient.data !== undefined
+}
 
 // 🧠 Fix: Normalize data so it's always a Patient object
 const patient = computed<Patient>(() => {
-  return (props.patient as any).data ?? props.patient
+  return isPatientWrapper(props.patient) ? props.patient.data : props.patient
 })
 
 // Get flash messages
@@ -79,36 +46,27 @@ const originalData = ref<Record<string, any>>({})
 // Form Setup
 // --------------------------------------
 const form = useForm({
-  hospital_id: patient.hospital_id || '',
-  phone: patient.phone || '',
-  email: patient.email || '',
-  title: patient.title || '',
-  first_name: patient.first_name || '',
-  middle_name: patient.middle_name || '',
-  last_name: patient.last_name || '',
-  dob: patient.dob || '',
-  gender: patient.gender || '',
-  additional_details: patient.additional_details || '',
-  registration_id: patient.registration_id || '',
-  service_location_id: patient.service_location_id || '',
-  unit_id: patient.unit_id || '',
-  consultant_id: patient.consultant_id || '',
-  patient_type: patient.patient_type || 'NEW',
-  payment_party: patient.payment_party || 'Self/General',
-  permanent_address: patient.permanent_address || '',
-  city: patient.city || '',
-  state: patient.state || '',
-  zipcode: patient.zipcode || '',
-  nationality: patient.nationality || '',
-  occupation: patient.occupation || '',
-  marital_status: patient.marital_status || '',
-  religion: patient.religion || '',
-  nok_full_name: patient.nok_full_name || '',
-  nok_phone: patient.nok_phone || '',
-  nok_address: patient.nok_address || '',
-  nok_relationship: patient.nok_relationship || '',
-  nok_occupation: patient.nok_occupation || '',
-  nok_gender: patient.nok_gender || '',
+  hospital_id: patient.value.hospital_id || '',
+  phone: patient.value.phone || '',
+  email: patient.value.email || '',
+  title: patient.value.title || '',
+  first_name: patient.value.first_name || '',
+  middle_name: patient.value.middle_name || '',
+  last_name: patient.value.last_name || '',
+  dob: patient.value.dob || '',
+  gender: patient.value.gender || '',
+  additional_details: patient.value.additional_details || '',
+  registration_id: patient.value.registration_id || '',
+  address: patient.value.address || '',
+  city: patient.value.city || '',
+  state: patient.value.state || '',
+  country: patient.value.country || '',
+  nok_name: patient.value.nok_name || '',
+  nok_phone: patient.value.nok_phone || '',
+  nok_email: patient.value.nok_email || '',
+  nok_address: patient.value.nok_address || '',
+  nok_relationship: patient.value.nok_relationship || '',
+  nok_gender: patient.value.nok_gender || '',
 })
 
 // Store original data
@@ -127,8 +85,8 @@ const submit = () => {
   const changedData: Record<string, any> = {}
 
   Object.keys(form.data()).forEach((key) => {
-    if (form[key] !== originalData.value[key]) {
-      changedData[key] = form[key]
+    if (form[key as keyof typeof form.data] !== originalData.value[key]) {
+      changedData[key] = form[key as keyof typeof form.data]
     }
   })
 
@@ -140,7 +98,7 @@ const submit = () => {
 
   console.log('Sending changed data:', changedData)
 
-  form.transform(() => changedData).put(route('patients.update', patient.id), {
+  form.transform(() => changedData).put(route('patients.update', patient.value.id), {
     preserveScroll: true,
     preserveState: true,
     onSuccess: () => {
@@ -163,6 +121,13 @@ const submit = () => {
     },
   })
 }
+
+// Computed property for full name
+const fullName = computed(() =>
+  [patient.value.title, patient.value.first_name, patient.value.middle_name, patient.value.last_name]
+    .filter(Boolean)
+    .join(' ')
+)
 </script>
 
 <template>
@@ -220,7 +185,7 @@ const submit = () => {
         <div>
           <h1 class="text-2xl font-bold text-gray-800">Edit Patient</h1>
           <p class="text-gray-500 text-sm">
-            Update {{ patient.full_name }}'s information • ID: {{ patient.hospital_id }}
+            Update {{ fullName }}'s information • ID: {{ patient.hospital_id }}
           </p>
         </div>
         <Link
@@ -386,111 +351,17 @@ const submit = () => {
           </div>
         </div>
 
-        <!-- Section: Registration Information -->
-        <div>
-          <h2 class="font-semibold text-xl text-gray-800 mb-4 pb-2 border-b-2 border-teal-400">
-            REGISTRATION INFORMATION
-          </h2>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <!-- Select Registration -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Select Registration</label>
-              <select
-                v-model="form.registration_id"
-                class="w-full border-gray-300 rounded-lg shadow-sm focus:border-teal-400 focus:ring focus:ring-teal-200"
-              >
-                <option value="">Select Registration</option>
-                <option v-for="reg in registrationTypes" :key="reg.id" :value="reg.id">
-                  {{ reg.name }}
-                </option>
-              </select>
-            </div>
-
-            <!-- Select Service Location -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Select Service Location</label>
-              <select
-                v-model="form.service_location_id"
-                class="w-full border-gray-300 rounded-lg shadow-sm focus:border-teal-400 focus:ring focus:ring-teal-200"
-              >
-                <option value="">Select Service Location</option>
-                <option v-for="loc in serviceLocations" :key="loc.id" :value="loc.id">
-                  {{ loc.name }}
-                </option>
-              </select>
-            </div>
-
-            <!-- Select Unit -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Select Unit</label>
-              <select
-                v-model="form.unit_id"
-                class="w-full border-gray-300 rounded-lg shadow-sm focus:border-teal-400 focus:ring focus:ring-teal-200"
-              >
-                <option value="">Select Unit</option>
-                <option v-for="unit in units" :key="unit.id" :value="unit.id">
-                  {{ unit.name }}
-                </option>
-              </select>
-            </div>
-
-            <!-- Select Consultant -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Select Consultant</label>
-              <select
-                v-model="form.consultant_id"
-                class="w-full border-gray-300 rounded-lg shadow-sm focus:border-teal-400 focus:ring focus:ring-teal-200"
-              >
-                <option value="">Select Consultant</option>
-                <option v-for="consultant in consultants" :key="consultant.id" :value="consultant.id">
-                  {{ consultant.first_name }} {{ consultant.last_name }}
-                </option>
-              </select>
-            </div>
-
-            <!-- Select Patient Type -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">
-                Select Patient Type <span class="text-red-500">*</span>
-              </label>
-              <select
-                v-model="form.patient_type"
-                class="w-full border-gray-300 rounded-lg shadow-sm focus:border-teal-400 focus:ring focus:ring-teal-200"
-                required
-              >
-                <option value="">Select Patient Type</option>
-                <option v-for="type in patientTypes" :key="type" :value="type">{{ type }}</option>
-              </select>
-            </div>
-
-            <!-- Select Payment Party -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">
-                Select Payment Party <span class="text-red-500">*</span>
-              </label>
-              <select
-                v-model="form.payment_party"
-                class="w-full border-gray-300 rounded-lg shadow-sm focus:border-teal-400 focus:ring focus:ring-teal-200"
-                required
-              >
-                <option value="">Select Payment Party</option>
-                <option v-for="party in paymentParties" :key="party" :value="party">{{ party }}</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
         <!-- Section: Contact Information -->
         <div>
           <h2 class="font-semibold text-xl text-gray-800 mb-4 pb-2 border-b-2 border-teal-400">
             CONTACT INFORMATION
           </h2>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <!-- Permanent Address -->
+            <!-- Address -->
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Permanent Address</label>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Address</label>
               <input
-                v-model="form.permanent_address"
+                v-model="form.address"
                 type="text"
                 placeholder="e.g., No 52, Agbowo Street"
                 class="w-full border-gray-300 rounded-lg shadow-sm focus:border-teal-400 focus:ring focus:ring-teal-200"
@@ -519,66 +390,15 @@ const submit = () => {
               />
             </div>
 
-            <!-- Zipcode -->
+            <!-- Country -->
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Zipcode</label>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Country</label>
               <input
-                v-model="form.zipcode"
-                type="text"
-                placeholder="552542"
-                class="w-full border-gray-300 rounded-lg shadow-sm focus:border-teal-400 focus:ring focus:ring-teal-200"
-              />
-            </div>
-
-            <!-- Nationality -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Nationality</label>
-              <input
-                v-model="form.nationality"
+                v-model="form.country"
                 type="text"
                 placeholder="e.g., Nigeria"
                 class="w-full border-gray-300 rounded-lg shadow-sm focus:border-teal-400 focus:ring focus:ring-teal-200"
               />
-            </div>
-
-            <!-- Occupation -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Occupation</label>
-              <input
-                v-model="form.occupation"
-                type="text"
-                placeholder="Business Man"
-                class="w-full border-gray-300 rounded-lg shadow-sm focus:border-teal-400 focus:ring focus:ring-teal-200"
-              />
-            </div>
-
-            <!-- Marital Status -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Select Marital Status</label>
-              <select
-                v-model="form.marital_status"
-                class="w-full border-gray-300 rounded-lg shadow-sm focus:border-teal-400 focus:ring focus:ring-teal-200"
-              >
-                <option value="">Select Marital Status</option>
-                <option v-for="status in maritalStatuses" :key="status" :value="status">
-                  {{ status }}
-                </option>
-              </select>
-            </div>
-
-            <!-- Religion -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Select Religion</label>
-              <select
-                v-model="form.religion"
-                class="w-full border-gray-300 rounded-lg shadow-sm focus:border-teal-400 focus:ring focus:ring-teal-200"
-              >
-                <option value="">Select Religion</option>
-                <option value="Christianity">Christianity</option>
-                <option value="Islam">Islam</option>
-                <option value="Traditional">Traditional</option>
-                <option value="Other">Other</option>
-              </select>
             </div>
           </div>
         </div>
@@ -589,11 +409,11 @@ const submit = () => {
             NEXT-OF-KIN INFORMATION
           </h2>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <!-- NOK Full Name -->
+            <!-- NOK Name -->
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Next-of-Kin Full Name</label>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Next-of-Kin Name</label>
               <input
-                v-model="form.nok_full_name"
+                v-model="form.nok_name"
                 type="text"
                 placeholder="e.g., Adetola Bello"
                 class="w-full border-gray-300 rounded-lg shadow-sm focus:border-teal-400 focus:ring focus:ring-teal-200"
@@ -611,13 +431,24 @@ const submit = () => {
               />
             </div>
 
+            <!-- NOK Email -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Next-of-Kin Email</label>
+              <input
+                v-model="form.nok_email"
+                type="email"
+                placeholder="e.g., nok@email.com"
+                class="w-full border-gray-300 rounded-lg shadow-sm focus:border-teal-400 focus:ring focus:ring-teal-200"
+              />
+            </div>
+
             <!-- NOK Address -->
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">Next-of-Kin Address</label>
               <input
                 v-model="form.nok_address"
                 type="text"
-                placeholder="e.g., +234 802 345 6789"
+                placeholder="e.g., 123 Main St"
                 class="w-full border-gray-300 rounded-lg shadow-sm focus:border-teal-400 focus:ring focus:ring-teal-200"
               />
             </div>
@@ -629,17 +460,6 @@ const submit = () => {
                 v-model="form.nok_relationship"
                 type="text"
                 placeholder="e.g., Sister"
-                class="w-full border-gray-300 rounded-lg shadow-sm focus:border-teal-400 focus:ring focus:ring-teal-200"
-              />
-            </div>
-
-            <!-- NOK Occupation -->
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Next-of-Kin Occupation</label>
-              <input
-                v-model="form.nok_occupation"
-                type="text"
-                placeholder="e.g., Lawyer"
                 class="w-full border-gray-300 rounded-lg shadow-sm focus:border-teal-400 focus:ring focus:ring-teal-200"
               />
             </div>
@@ -663,7 +483,6 @@ const submit = () => {
         <div class="flex justify-end gap-4 pt-6 border-t">
           <Link
             :href="route('patients.show', patient.id)"
-
             class="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition font-medium"
           >
             Cancel

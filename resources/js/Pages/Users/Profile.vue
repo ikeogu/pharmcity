@@ -21,16 +21,16 @@
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div class="space-y-3">
           <ProfileField label="Email" :value="user.email" />
-          <ProfileField label="Phone" :value="user.phone" />
-          <ProfileField label="Gender" :value="user.gender" />
-          <ProfileField label="Date of Birth" :value="user.dob" />
+          <ProfileField label="Phone" :value="user.phone ?? ''" />
+          <ProfileField label="Gender" :value="user.gender ?? ''" />
+          <ProfileField label="Date of Birth" :value="user.dob ?? ''" />
         </div>
 
         <div class="space-y-3">
-          <ProfileField label="Country" :value="user.country" />
-          <ProfileField label="State" :value="user.state" />
-          <ProfileField label="City" :value="user.city" />
-          <ProfileField label="Address" :value="user.address" />
+          <ProfileField label="Country" :value="user.country ?? ''" />
+          <ProfileField label="State" :value="user.state ?? ''" />
+          <ProfileField label="City" :value="user.city ?? ''" />
+          <ProfileField label="Address" :value="user.address ?? ''" />
         </div>
       </div>
 
@@ -39,7 +39,7 @@
         <h2 class="text-lg font-semibold text-gray-800 mb-2">Roles</h2>
         <div class="flex flex-wrap gap-2">
           <span
-            v-for="role in user.roles"
+            v-for="role in userRoles"
             :key="role"
             class="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-sm"
           >
@@ -53,7 +53,6 @@
         <p>Joined on {{ user.created_at }}</p>
 
         <div class="flex gap-3">
-         
           <button
             @click="deleteUser(user.id)"
             class="bg-red-100 text-red-700 px-3 py-1 rounded hover:bg-red-200 flex items-center gap-1"
@@ -70,36 +69,34 @@
 import { Link, router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import { EditIcon, Trash2Icon } from 'lucide-vue-next'
-import { usePage } from '@inertiajs/vue3'
 import { computed } from 'vue'
+import type { User } from '@/types'
 
-interface User {
-  id: string
-  title: string
-  first_name: string
-  last_name: string
-  username: string
-  email: string
-  phone: string
-  dob: string
-  gender: string
-  address: string
-  roles: string[]
-  country: string
-  state: string
-  city: string
-  created_at: string
+interface UserWrapper {
+  data: User
 }
 
-const props = defineProps<{ user: { data?: User } | User }>()
+// Type guard to check if user has data property
+function isUserWrapper(user: User | UserWrapper): user is UserWrapper {
+  return 'data' in user && user.data !== undefined
+}
 
-const user = computed(() => props.user.data ?? props.user)
+const props = defineProps<{
+  user: User | UserWrapper
+}>()
 
-console.log(props.user)
+const user = computed<User>(() => {
+  return isUserWrapper(props.user) ? props.user.data : props.user
+})
 
-function deleteUser(id: string) {
+const userRoles = computed(() => {
+  if (!user.value.roles) return []
+  return user.value.roles.map(role => typeof role === 'string' ? role : role.name)
+})
+
+function deleteUser(id: number | string) {
   if (confirm('Are you sure you want to delete this user?')) {
-    router.delete(route('users.destroy', id), {
+    router.delete(route('users.destroy', { user: id }), {
       onSuccess: () => alert('User deleted successfully'),
     })
   }

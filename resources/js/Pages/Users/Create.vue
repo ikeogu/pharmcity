@@ -38,7 +38,7 @@
                 </select>
             </div>
         </div>
-        
+
         <div class="flex space-x-4">
              <!-- First Name -->
             <div class="flex-1">
@@ -64,7 +64,7 @@
             />
             </div>
         </div>
-       
+
 
         <!-- Email -->
         <div>
@@ -111,7 +111,7 @@
             id="address"
             type="text"
             class="w-full border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-indigo-500"
-            
+
           />
         </div>
 
@@ -219,6 +219,7 @@
 import AppLayout from '@/Layouts/AppLayout.vue'
 import { router } from '@inertiajs/vue3'
 import { reactive, ref } from 'vue'
+import axios from 'axios'
 
 const props = defineProps<{
     errors: Record<string, string>
@@ -238,9 +239,9 @@ const form = reactive({
     state_id: '',
     city_id: '',
     dob: '',
+    gender: '',  // ✅ Added gender field
     address: '',
     password_confirmation : ''
-
 })
 
 const states = ref<Array<{ id: number; name: string }>>([])
@@ -256,16 +257,19 @@ function submitForm() {
     onFinish: () => (processing.value = false),
     onSuccess: () => {
       // Optionally reset form after creation
-      form.title = '',
+      form.title = ''
       form.first_name = ''
       form.last_name = ''
       form.email = ''
       form.password = ''
-      form.role_id = '',
-      form.country_id = '',
-      form.dob = '',
-      form.address = '',
-      form.password_confirmation =''
+      form.role_id = ''
+      form.country_id = ''
+      form.state_id = ''
+      form.city_id = ''
+      form.dob = ''
+      form.gender = ''
+      form.address = ''
+      form.password_confirmation = ''
     },
   })
 }

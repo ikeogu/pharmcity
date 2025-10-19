@@ -99,7 +99,8 @@ watch([search, status, patientType, paymentParty, sortBy, sortOrder], () => {
   )
 })
 
-const refresh = (): void => router.reload({ preserveState: true })
+const refresh = (): void => router.visit(window.location.href, { preserveState: true });
+
 
 // ---------------------
 // Import Modal

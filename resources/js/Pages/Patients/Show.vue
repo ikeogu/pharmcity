@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue'
 import { Head, Link, router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
+import type { Patient } from '@/types'
 import {
   IconEdit,
   IconUserPlus,
@@ -10,46 +11,18 @@ import {
   IconChevronLeft,
 } from '@tabler/icons-vue'
 
-interface Patient {
-  id: number
-  registration_id: string
-  first_name: string
-  middle_name?: string
-  last_name: string
-  gender: string
-  dob: string
-  email?: string
-  phone?: string
-  permanent_address?: string
-  city?: string
-  state?: string
-  nationality?: string
-  marital_status?: string
-  religion?: string
-  occupation?: string
-  consultant?: {
-    id: number
-    name: string
-    specialization: string
-  }
-  insurance?: {
-    provider_name: string
-    policy_number: string
-    coverage: string
-  }
-  last_seen?: string
-  current_medications?: string[]
-  status: string
-}
-
 const props = defineProps<{
   patient: Patient | { data: Patient }
 }>()
 
+// Type guard to check if patient has data property
+function isPatientWrapper(patient: Patient | { data: Patient }): patient is { data: Patient } {
+  return 'data' in patient && patient.data !== undefined
+}
 
 // 🧠 Fix: Normalize data so it's always a Patient object
 const patient = computed<Patient>(() => {
-  return (props.patient as any).data ?? props.patient
+  return isPatientWrapper(props.patient) ? props.patient.data : props.patient
 })
 
 // full name
@@ -111,65 +84,32 @@ const fullName = computed(() =>
             <p><strong>DOB:</strong> {{ patient.dob }}</p>
             <p><strong>Phone:</strong> {{ patient.phone }}</p>
             <p><strong>Email:</strong> {{ patient.email }}</p>
-            <p><strong>Address:</strong> {{ patient.permanent_address }}</p>
+            <p><strong>Address:</strong> {{ patient.address }}</p>
             <p><strong>City:</strong> {{ patient.city }}</p>
             <p><strong>State:</strong> {{ patient.state }}</p>
-            <p><strong>Nationality:</strong> {{ patient.nationality }}</p>
-            <p><strong>Occupation:</strong> {{ patient.occupation }}</p>
-            <p><strong>Religion:</strong> {{ patient.religion }}</p>
-            <p><strong>Marital Status:</strong> {{ patient.marital_status }}</p>
+            <p><strong>Country:</strong> {{ patient.country }}</p>
           </div>
         </div>
 
-        <!-- Consultant & Insurance -->
+        <!-- Next of Kin -->
         <div class="space-y-6">
           <div class="bg-gray-50 p-4 rounded-lg border">
-            <h3 class="text-gray-700 font-semibold mb-2">Consultant</h3>
-            <p><strong>Name:</strong> {{ patient.consultant?.name ?? '—' }}</p>
-            <p>
-              <strong>Specialization:</strong>
-              {{ patient.consultant?.specialization ?? '—' }}
-            </p>
-          </div>
-
-          <div class="bg-gray-50 p-4 rounded-lg border">
-            <h3 class="text-gray-700 font-semibold mb-2">Insurance</h3>
-            <p>
-              <strong>Provider:</strong>
-              {{ patient.insurance?.provider_name ?? '—' }}
-            </p>
-            <p>
-              <strong>Policy #:</strong>
-              {{ patient.insurance?.policy_number ?? '—' }}
-            </p>
-            <p>
-              <strong>Coverage:</strong>
-              {{ patient.insurance?.coverage ?? '—' }}
-            </p>
+            <h3 class="text-gray-700 font-semibold mb-2">Next of Kin</h3>
+            <p><strong>Name:</strong> {{ patient.nok_name ?? '—' }}</p>
+            <p><strong>Phone:</strong> {{ patient.nok_phone ?? '—' }}</p>
+            <p><strong>Email:</strong> {{ patient.nok_email ?? '—' }}</p>
+            <p><strong>Relationship:</strong> {{ patient.nok_relationship ?? '—' }}</p>
+            <p><strong>Address:</strong> {{ patient.nok_address ?? '—' }}</p>
           </div>
         </div>
       </div>
 
-      <!-- Medical Section -->
+      <!-- Additional Information Section -->
       <div class="bg-white p-6 rounded-xl shadow-sm">
-        <h2 class="text-lg font-semibold text-gray-700 mb-4">Medical Information</h2>
+        <h2 class="text-lg font-semibold text-gray-700 mb-4">Additional Information</h2>
 
-        <p><strong>Status:</strong> {{ patient.status }}</p>
-        <p><strong>Last Seen:</strong> {{ patient.last_seen ?? '—' }}</p>
-
-        <div class="mt-4">
-          <h3 class="font-semibold text-gray-700">Current Medications</h3>
-          <ul class="list-disc list-inside text-gray-600">
-            <li
-              v-for="(med, index) in patient.current_medications"
-              :key="index"
-            >
-              {{ med }}
-            </li>
-            <li v-if="!patient.current_medications?.length">
-              No medications listed.
-            </li>
-          </ul>
+        <div class="prose max-w-none">
+          <p>{{ patient.additional_details || 'No additional details available.' }}</p>
         </div>
       </div>
     </div>
