@@ -1,4 +1,7 @@
-{
+{   "name": "pharmcity",
+    "version": "1.0.0",
+    "description": "PharmCity - Pharmacy management system built with Laravel, Vue, and Inertia.js",
+    "author": "Emmanuel Ikeogu",
     "$schema": "https://json.schemastore.org/package.json",
     "private": true,
     "type": "module",
@@ -6,7 +9,8 @@
         "dev": "vite",
         "build": "vue-tsc && vite build",
         "preview": "vite preview",
-        "type-check": "vue-tsc --noEmit"
+        "type-check": "vue-tsc --noEmit",
+        "serve": "php artisan serve"
     },
     "devDependencies": {
         "@inertiajs/vue3": "^2.0.0",
@@ -19,7 +23,6 @@
         "@vue/tsconfig": "^0.8.1",
         "autoprefixer": "^10.4.19",
         "axios": "^1.11.0",
-        "concurrently": "^9.0.1",
         "jiti": "^2.6.1",
         "laravel-vite-plugin": "^2.0.0",
         "postcss": "^8.4.38",
@@ -61,4 +64,5 @@
         "vuetify": "^3.10.4",
         "vuevectormap": "^2.1.1"
     }
+
 }

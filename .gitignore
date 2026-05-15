@@ -22,3 +22,6 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+/database/database.sqlite
+/dist_electron
+/php
