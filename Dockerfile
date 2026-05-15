@@ -34,9 +34,21 @@ COPY . .
 
 RUN composer run-script post-autoload-dump --no-interaction 2>/dev/null || true
 
-RUN npm run build \
+RUN mkdir -p storage/framework/views \
+        storage/framework/cache/data \
+        storage/framework/sessions \
+        storage/app/public \
+        storage/logs \
+        bootstrap/cache \
+    && npm run build \
     && chmod -R 775 storage bootstrap/cache
+
+COPY start.sh /start.sh
+RUN chmod +x /start.sh
+
+# PHP built-in server: allow 4 concurrent workers
+ENV PHP_CLI_SERVER_WORKERS=4
 
 EXPOSE 8000
 
-CMD ["sh", "-c", "php artisan config:cache && php artisan route:cache && php artisan view:cache && php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=${PORT:-8000}"]
+CMD ["/start.sh"]
