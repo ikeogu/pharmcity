@@ -34,7 +34,7 @@ class CountrySeedeer extends Seeder
                "iso_code"=>$datum['iso2'],
                "iso3_code"=>$datum['iso3'],
                "flag_url" => $flagUrl,
-               'status' => 0,
+               'status' => false,
                'api_name' => $datum['country'],
                'region' => 'Europe',
            ]);

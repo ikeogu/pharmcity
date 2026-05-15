@@ -28,7 +28,7 @@ return new class extends Migration
             $table->unsignedBigInteger('registration_id')->nullable(); // FK to registrations
             $table->unsignedBigInteger('service_location_id')->nullable(); // FK to service_locations
             $table->unsignedBigInteger('unit_id')->nullable(); // FK to units
-            $table->unsignedBigInteger('consultant_id')->nullable(); // FK to consultants/users
+            $table->ulid('consultant_id')->nullable(); // FK to consultants/users
             $table->string('patient_type'); // NEW, REVIEW, etc.
             $table->string('payment_party'); // Self/General, HMO/NHIS, Employer
 
